@@ -15,7 +15,7 @@ export default function RootLayout({
     <html lang="fr">
       <head>
         {/* Précharge la 1ère frame avant que JS s'exécute → supprime le flash noir */}
-        <link rel="preload" as="image" href="/frames/frame-001.webp" />
+        <link rel="preload" as="image" href="/frames/frame-0001.webp" />
       </head>
       <body>{children}</body>
     </html>
