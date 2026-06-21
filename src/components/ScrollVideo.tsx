@@ -2,15 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const MAX_FRAMES = 300;
-const TARGET_FPS = 30;
-
 export default function ScrollVideo() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const framesRef = useRef<ImageBitmap[]>([]);
+  const totalRef = useRef(0);
   const rafRef = useRef<number>(0);
+  const loopStartedRef = useRef(false);
   const [loadPct, setLoadPct] = useState(0);
-  const [ready, setReady] = useState(false);
+  const [firstFrameReady, setFirstFrameReady] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -18,62 +17,68 @@ export default function ScrollVideo() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    let lastIndexRef = { current: -1 };
+
     const setSize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      // Canvas cleared on resize — force redraw on next RAF tick
+      lastIndexRef.current = -1;
     };
     setSize();
     window.addEventListener("resize", setSize);
 
-    // --- Extraction des frames ---
-    const video = document.createElement("video");
-    video.src = "/video/showreel.mp4";
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = "auto";
+    const startLoop = () => {
+      if (loopStartedRef.current) return;
+      loopStartedRef.current = true;
 
-    video.addEventListener(
-      "loadedmetadata",
-      async () => {
-        const duration = video.duration;
-        const count = Math.min(Math.ceil(duration * TARGET_FPS), MAX_FRAMES);
-        const frames: ImageBitmap[] = [];
-
-        for (let i = 0; i < count; i++) {
-          video.currentTime = (i / (count - 1)) * duration;
-          await new Promise<void>((resolve) => {
-            video.addEventListener("seeked", () => resolve(), { once: true });
-          });
-          frames.push(await createImageBitmap(video));
-          setLoadPct(Math.round(((i + 1) / count) * 100));
-        }
-
-        framesRef.current = frames;
-        drawFrame(ctx, frames[0], canvas.width, canvas.height);
-        setReady(true);
-
-        // --- Boucle de rendu synchronisée avec le scroll ---
-        let lastIndex = -1;
-        const loop = () => {
+      const loop = () => {
+        const available = framesRef.current.length;
+        if (available > 0) {
           const scrollTop = window.scrollY;
-          const maxScroll =
-            document.documentElement.scrollHeight - window.innerHeight;
+          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
           const p = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
-          const index = Math.round(p * (frames.length - 1));
-
-          if (index !== lastIndex) {
-            drawFrame(ctx, frames[index], canvas.width, canvas.height);
-            lastIndex = index;
+          const index = Math.min(
+            Math.round(p * (totalRef.current - 1)),
+            available - 1
+          );
+          if (index !== lastIndexRef.current) {
+            drawFrame(ctx, framesRef.current[index], canvas.width, canvas.height);
+            lastIndexRef.current = index;
           }
-
-          rafRef.current = requestAnimationFrame(loop);
-        };
+        }
         rafRef.current = requestAnimationFrame(loop);
-      },
-      { once: true }
-    );
+      };
+      rafRef.current = requestAnimationFrame(loop);
+    };
 
-    video.load();
+    const run = async () => {
+      // Charge le manifeste pour connaître le nombre de frames
+      const manifest = await fetch("/frames/manifest.json").then((r) => r.json());
+      const count: number = manifest.count;
+      totalRef.current = count;
+
+      for (let i = 0; i < count; i++) {
+        const frameNum = String(i + 1).padStart(3, "0");
+        const img = new Image();
+        img.src = `/frames/frame-${frameNum}.webp`;
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve(); // skip missing frames gracefully
+        });
+        const bitmap = await createImageBitmap(img);
+        framesRef.current.push(bitmap);
+        setLoadPct(Math.round(((i + 1) / count) * 100));
+
+        if (i === 0) {
+          drawFrame(ctx, bitmap, canvas.width, canvas.height);
+          setFirstFrameReady(true);
+          startLoop();
+        }
+      }
+    };
+
+    run();
 
     return () => {
       window.removeEventListener("resize", setSize);
@@ -84,21 +89,13 @@ export default function ScrollVideo() {
 
   return (
     <>
-      {/* Canvas fixé en permanence plein écran */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "#000",
-          zIndex: 0,
-        }}
-      >
+      <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 0 }}>
         <canvas
           ref={canvasRef}
           style={{ display: "block", width: "100%", height: "100%" }}
         />
 
-        {!ready && (
+        {!firstFrameReady && (
           <div
             style={{
               position: "absolute",
@@ -115,9 +112,22 @@ export default function ScrollVideo() {
             {loadPct}%
           </div>
         )}
+
+        {firstFrameReady && loadPct < 100 && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              height: 2,
+              width: `${loadPct}%`,
+              background: "rgba(255,255,255,0.3)",
+              transition: "width 0.1s linear",
+            }}
+          />
+        )}
       </div>
 
-      {/* Zone scrollable qui détermine la progression */}
       <div style={{ height: "500vh", position: "relative", zIndex: 1 }} />
     </>
   );

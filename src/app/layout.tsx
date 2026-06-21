@@ -13,6 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
+      <head>
+        {/* Précharge la 1ère frame avant que JS s'exécute → supprime le flash noir */}
+        <link rel="preload" as="image" href="/frames/frame-001.webp" />
+      </head>
       <body>{children}</body>
     </html>
   );

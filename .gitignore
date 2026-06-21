@@ -32,3 +32,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# frames extraites (générées par npm run extract-frames)
+/public/frames

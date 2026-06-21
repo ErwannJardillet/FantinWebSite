@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "tsc --noEmit",
+    "extract-frames": "node scripts/extract-frames.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",
