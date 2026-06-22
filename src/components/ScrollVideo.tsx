@@ -13,12 +13,22 @@ export const SCROLL_ZONES: {
   content: React.ReactNode;
 }[] = [
   {
+    start: 0,
+    end: 100,
+    factor: 5,
+    content: (
+      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
+        Zone A — frames 0–100
+      </div>
+    ),
+  },
+  {
     start: 250,
     end: 350,
     factor: 5,
     content: (
       <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone A — frames 250–350
+        Zone B — frames 250–350
       </div>
     ),
   },
@@ -28,17 +38,37 @@ export const SCROLL_ZONES: {
     factor: 5,
     content: (
       <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone B — frames 650–750
+        Zone C — frames 650–750
       </div>
     ),
   },
   {
-    start: 890,
-    end: 990,
+    start: 990,
+    end: 1090,
     factor: 5,
     content: (
       <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone C — frames 890–990
+        Zone D — frames 990–1090
+      </div>
+    ),
+  },
+  {
+    start: 1330,
+    end: 1430,
+    factor: 5,
+    content: (
+      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
+        Zone E — frames 1330–1430
+      </div>
+    ),
+  },
+  {
+    start: 1950,
+    end: 2053,
+    factor: 5,
+    content: (
+      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
+        Zone F — frames 1950–2053
       </div>
     ),
   },
@@ -69,7 +99,18 @@ function scrollPctToFrame(p: number, scrollMap: Float32Array): number {
   return Math.min(lo, total - 1);
 }
 
-export default function ScrollVideo() {
+export default function ScrollVideo({
+  onProgress,
+  onComplete,
+}: {
+  onProgress?: (pct: number) => void;
+  onComplete?: () => void;
+} = {}) {
+  const onProgressRef = useRef(onProgress);
+  const onCompleteRef = useRef(onComplete);
+  onProgressRef.current = onProgress;
+  onCompleteRef.current = onComplete;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const framesRef = useRef<(ImageBitmap | null)[]>([]);
   const totalRef = useRef(0);
@@ -80,6 +121,7 @@ export default function ScrollVideo() {
   const scrollDirtyRef = useRef(true);
   const loadPctRef = useRef(0);
   const loadPctTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completedRef = useRef(false);
   const activeZoneRef = useRef<number | null>(null);
   const [loadPct, setLoadPct] = useState(0);
   const [firstFrameReady, setFirstFrameReady] = useState(false);
@@ -175,6 +217,11 @@ export default function ScrollVideo() {
       if (!loadPctTimerRef.current) {
         loadPctTimerRef.current = setTimeout(() => {
           setLoadPct(loadPctRef.current);
+          onProgressRef.current?.(loadPctRef.current);
+          if (!completedRef.current && loadPctRef.current >= 50) {
+            completedRef.current = true;
+            onCompleteRef.current?.();
+          }
           loadPctTimerRef.current = null;
         }, 50);
       }
@@ -215,6 +262,7 @@ export default function ScrollVideo() {
       await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
       setLoadPct(100);
+      onProgressRef.current?.(100);
     };
 
     run();
@@ -253,37 +301,6 @@ export default function ScrollVideo() {
           </div>
         )}
 
-        {!firstFrameReady && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "rgba(255,255,255,0.5)",
-              fontSize: 13,
-              fontFamily: "sans-serif",
-              letterSpacing: "0.1em",
-            }}
-          >
-            {loadPct}%
-          </div>
-        )}
-
-        {firstFrameReady && loadPct < 100 && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              height: 2,
-              width: `${loadPct}%`,
-              background: "rgba(255,255,255,0.3)",
-              transition: "width 0.05s linear",
-            }}
-          />
-        )}
       </div>
 
       <div style={{ height: "1800vh", position: "relative", zIndex: 1 }} />
