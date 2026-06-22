@@ -1,5 +1,6 @@
 "use client";
 
+import Lenis from "lenis";
 import { useEffect, useRef, useState } from "react";
 
 const CONCURRENCY = 6;
@@ -118,7 +119,6 @@ export default function ScrollVideo({
   const rafRef = useRef<number>(0);
   const loopStartedRef = useRef(false);
   const lastIndexRef = useRef(-1);
-  const scrollDirtyRef = useRef(true);
   const loadPctRef = useRef(0);
   const loadPctTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef(false);
@@ -141,7 +141,6 @@ export default function ScrollVideo({
       canvas.height = window.innerHeight * dpr;
       ctx.scale(dpr, dpr);
       lastIndexRef.current = -1;
-      scrollDirtyRef.current = true;
     };
     setSize();
 
@@ -151,21 +150,18 @@ export default function ScrollVideo({
     };
     window.addEventListener("resize", onResize);
 
-    const onScroll = () => {
-      scrollDirtyRef.current = true;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const lenis = new Lenis({ duration: 1.2 });
 
     const startLoop = () => {
       if (loopStartedRef.current) return;
       loopStartedRef.current = true;
 
-      const loop = () => {
-        if (scrollDirtyRef.current && framesRef.current.length > 0) {
-          scrollDirtyRef.current = false;
-          const scrollTop = window.scrollY;
-          const maxScroll =
-            document.documentElement.scrollHeight - window.innerHeight;
+      const loop = (time: DOMHighResTimeStamp) => {
+        lenis.raf(time);
+
+        if (framesRef.current.length > 0) {
+          const scrollTop = lenis.scroll;
+          const maxScroll = lenis.limit || 1;
           const p = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
 
           const map = scrollMapRef.current;
@@ -182,7 +178,6 @@ export default function ScrollVideo({
             lastIndexRef.current = index;
           }
 
-          // Met à jour la zone active uniquement au changement
           const zoneIdx = SCROLL_ZONES.findIndex(
             (z) => index >= z.start && index < z.end
           );
@@ -269,7 +264,7 @@ export default function ScrollVideo({
 
     return () => {
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", onScroll);
+      lenis.destroy();
       cancelAnimationFrame(rafRef.current);
       if (resizeTimer) clearTimeout(resizeTimer);
       if (loadPctTimerRef.current) clearTimeout(loadPctTimerRef.current);
