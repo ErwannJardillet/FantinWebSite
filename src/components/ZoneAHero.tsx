@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
 const CYAN = "#00CFFF";
-const NAV_ITEMS = ["À propos", "Méthode", "Réalisations", "Contact", "Services"];
 
 // Plage de frames sur laquelle l'opacité descend de 1 → 0 en fin de zone A
 const FADE_START = 75;
@@ -20,7 +19,6 @@ export default function ZoneAHero({
   onFrameUpdate: { current: FrameCallback };
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const btnRef = useRef<HTMLAnchorElement>(null);
@@ -55,22 +53,16 @@ export default function ZoneAHero({
 
     gsap.set(containerRef.current, { opacity: 1 });
     gsap.set(
-      [navRef.current, headingRef.current, descRef.current, btnRef.current],
+      [headingRef.current, descRef.current, btnRef.current],
       { opacity: 0 }
     );
 
     gsap
       .timeline({ delay: 0.15 })
       .fromTo(
-        navRef.current,
-        { opacity: 0, y: -22 },
-        { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }
-      )
-      .fromTo(
         headingRef.current,
         { opacity: 0, x: -52 },
-        { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" },
-        "-=0.25"
+        { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" }
       )
       .fromTo(
         descRef.current,
@@ -98,58 +90,6 @@ export default function ZoneAHero({
         zIndex: 10,
       }}
     >
-      {/* Navigation */}
-      <nav
-        ref={navRef}
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexWrap: "wrap",
-          paddingTop: "clamp(14px, 2.8vh, 26px)",
-          paddingInline: "clamp(20px, 5vw, 80px)",
-          gap: 0,
-        }}
-      >
-        {NAV_ITEMS.map((item, i) => (
-          <span key={item} style={{ display: "flex", alignItems: "center" }}>
-            <a
-              href="#"
-              style={{
-                color: "rgba(255,255,255,0.9)",
-                textDecoration: "none",
-                fontSize: "clamp(9px, 1vw, 13px)",
-                letterSpacing: "0.13em",
-                fontWeight: 400,
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.color = "#fff")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.color =
-                  "rgba(255,255,255,0.9)")
-              }
-            >
-              {item}
-            </a>
-            {i < NAV_ITEMS.length - 1 && (
-              <span
-                style={{
-                  color: CYAN,
-                  fontSize: "clamp(9px, 1vw, 13px)",
-                  fontWeight: 700,
-                  marginInline: "clamp(6px, 1vw, 16px)",
-                  lineHeight: 1,
-                }}
-              >
-                →
-              </span>
-            )}
-          </span>
-        ))}
-      </nav>
-
       {/* Bloc texte gauche */}
       <div
         style={{

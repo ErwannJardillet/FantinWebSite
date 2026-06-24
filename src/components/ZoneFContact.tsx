@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 
 const CYAN = "#00CFFF";
-const NAV_ITEMS = ["À propos", "Méthode", "Réalisations", "Contact", "Services"];
 
 const ZONE_START = 1950;
 const FADE_START = 2028;
@@ -73,7 +72,6 @@ export default function ZoneFContact({
   const [sent, setSent] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const formWrapRef = useRef<HTMLDivElement>(null);
   const hasEnteredRef = useRef(false);
@@ -99,14 +97,12 @@ export default function ZoneFContact({
     hasEnteredRef.current = true;
 
     gsap.set(containerRef.current, { opacity: 1 });
-    gsap.set([navRef.current, titleRef.current, formWrapRef.current], { opacity: 0 });
+    gsap.set([titleRef.current, formWrapRef.current], { opacity: 0 });
 
     gsap
       .timeline({ delay: 0.1 })
-      .fromTo(navRef.current,
-        { opacity: 0, y: -22 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" })
       .fromTo(titleRef.current,
-        { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, "-=0.25")
+        { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" })
       .fromTo(formWrapRef.current,
         { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, "-=0.35");
   }, [isActive]);
@@ -129,49 +125,6 @@ export default function ZoneFContact({
         zIndex: 10,
       }}
     >
-      {/* Navigation */}
-      <nav
-        ref={navRef}
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexWrap: "wrap",
-          paddingTop: "clamp(14px, 2.8vh, 26px)",
-          paddingInline: "clamp(20px, 5vw, 80px)",
-          gap: 0,
-        }}
-      >
-        {NAV_ITEMS.map((item, i) => (
-          <span key={item} style={{ display: "flex", alignItems: "center" }}>
-            <a
-              href="#"
-              style={{
-                color: "rgba(255,255,255,0.9)",
-                textDecoration: "none",
-                fontSize: "clamp(9px, 1vw, 13px)",
-                letterSpacing: "0.13em",
-                fontWeight: 400,
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.9)")}
-            >
-              {item}
-            </a>
-            {i < NAV_ITEMS.length - 1 && (
-              <span style={{
-                color: CYAN,
-                fontSize: "clamp(9px, 1vw, 13px)",
-                fontWeight: 700,
-                marginInline: "clamp(6px, 1vw, 16px)",
-                lineHeight: 1,
-              }}>→</span>
-            )}
-          </span>
-        ))}
-      </nav>
-
       {/* Titre */}
       <div
         ref={titleRef}

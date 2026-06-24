@@ -2,6 +2,7 @@
 
 import Lenis from "lenis";
 import { useEffect, useRef, useState } from "react";
+import Breadcrumb from "@/components/Breadcrumb";
 import ZoneAHero from "@/components/ZoneAHero";
 import ZoneBServices from "@/components/ZoneBServices";
 import ZoneCMethod from "@/components/ZoneCMethod";
@@ -269,6 +270,8 @@ export default function ScrollVideo({
 
   return (
     <>
+      <Breadcrumb activeZone={activeZone} />
+
       <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 0 }}>
         <canvas
           ref={canvasRef}
