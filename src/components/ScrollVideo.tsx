@@ -2,6 +2,12 @@
 
 import Lenis from "lenis";
 import { useEffect, useRef, useState } from "react";
+import ZoneAHero from "@/components/ZoneAHero";
+import ZoneBServices from "@/components/ZoneBServices";
+import ZoneCMethod from "@/components/ZoneCMethod";
+import ZoneDProjects from "@/components/ZoneDProjects";
+import ZoneEAbout from "@/components/ZoneEAbout";
+import ZoneFContact from "@/components/ZoneFContact";
 
 const CONCURRENCY = 6;
 
@@ -17,61 +23,37 @@ export const SCROLL_ZONES: {
     start: 0,
     end: 100,
     factor: 5,
-    content: (
-      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone A — frames 0–100
-      </div>
-    ),
+    content: null, // géré par ZoneAHero
   },
   {
     start: 250,
     end: 350,
     factor: 5,
-    content: (
-      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone B — frames 250–350
-      </div>
-    ),
+    content: null, // géré par ZoneBServices
   },
   {
     start: 650,
     end: 750,
     factor: 5,
-    content: (
-      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone C — frames 650–750
-      </div>
-    ),
+    content: null, // géré par ZoneCMethod
   },
   {
     start: 990,
     end: 1090,
     factor: 5,
-    content: (
-      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone D — frames 990–1090
-      </div>
-    ),
+    content: null, // géré par ZoneDProjects
   },
   {
     start: 1330,
     end: 1430,
     factor: 5,
-    content: (
-      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone E — frames 1330–1430
-      </div>
-    ),
+    content: null, // géré par ZoneEContact
   },
   {
     start: 1950,
     end: 2053,
     factor: 5,
-    content: (
-      <div style={{ color: "white", fontSize: 48, fontWeight: 700 }}>
-        Zone F — frames 1950–2053
-      </div>
-    ),
+    content: null, // géré par ZoneFContact
   },
 ];
 
@@ -123,6 +105,12 @@ export default function ScrollVideo({
   const loadPctTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef(false);
   const activeZoneRef = useRef<number | null>(null);
+  const heroFrameCallbackRef = useRef<((frame: number) => void) | null>(null);
+  const zoneBFrameCallbackRef = useRef<((frame: number) => void) | null>(null);
+  const zoneCFrameCallbackRef = useRef<((frame: number) => void) | null>(null);
+  const zoneDFrameCallbackRef = useRef<((frame: number) => void) | null>(null);
+  const zoneEFrameCallbackRef = useRef<((frame: number) => void) | null>(null);
+  const zoneFFrameCallbackRef = useRef<((frame: number) => void) | null>(null);
   const [loadPct, setLoadPct] = useState(0);
   const [firstFrameReady, setFirstFrameReady] = useState(false);
   const [activeZone, setActiveZone] = useState<number | null>(null);
@@ -177,6 +165,13 @@ export default function ScrollVideo({
             drawFrame(ctx, frame, window.innerWidth, window.innerHeight);
             lastIndexRef.current = index;
           }
+
+          heroFrameCallbackRef.current?.(index);
+          zoneBFrameCallbackRef.current?.(index);
+          zoneCFrameCallbackRef.current?.(index);
+          zoneDFrameCallbackRef.current?.(index);
+          zoneEFrameCallbackRef.current?.(index);
+          zoneFFrameCallbackRef.current?.(index);
 
           const zoneIdx = SCROLL_ZONES.findIndex(
             (z) => index >= z.start && index < z.end
@@ -280,8 +275,26 @@ export default function ScrollVideo({
           style={{ display: "block", width: "100%", height: "100%" }}
         />
 
-        {/* Contenu HTML des zones lentes */}
-        {activeZone !== null && (
+        {/* Zone A — hero avec animations d'entrée / sortie */}
+        <ZoneAHero isActive={activeZone === 0} onFrameUpdate={heroFrameCallbackRef} />
+
+        {/* Zone B — services */}
+        <ZoneBServices isActive={activeZone === 1} onFrameUpdate={zoneBFrameCallbackRef} />
+
+        {/* Zone C — méthode en cascade */}
+        <ZoneCMethod isActive={activeZone === 2} onFrameUpdate={zoneCFrameCallbackRef} />
+
+        {/* Zone D — carousel projets */}
+        <ZoneDProjects isActive={activeZone === 3} onFrameUpdate={zoneDFrameCallbackRef} />
+
+        {/* Zone E — à propos */}
+        <ZoneEAbout isActive={activeZone === 4} onFrameUpdate={zoneEFrameCallbackRef} />
+
+        {/* Zone F — contact */}
+        <ZoneFContact isActive={activeZone === 5} onFrameUpdate={zoneFFrameCallbackRef} />
+
+        {/* Contenu HTML des autres zones lentes */}
+        {activeZone !== null && activeZone !== 0 && SCROLL_ZONES[activeZone].content && (
           <div
             style={{
               position: "absolute",
